@@ -1,0 +1,42 @@
+project: "limix_numpy" 
+test_type: "any_vs_common" # specify test if you want to use SNP-based approach (choose between common, any, specific or any_specific)
+analysis: "gwas" 
+trait_index: 0 # only relevant for specific effect test
+optimize_hyperparams: True
+verbose: True
+rank: 4
+
+output_directory: "/sc/home/bibiana.horn/projects/LIMIX_modified/limix_modified/run_numpylimix/results/simulation_results_new" # for likelihood and beta results
+
+mean_type: "Constant"
+original_L_init: False
+
+data_param:
+  dset: "thaliana_horton" 
+  train_pct: 1.0
+  val_pct: 0.0
+  data_path_config: "${PACKAGE_ROOT}/run_numpylimix/configs/config.json"
+  batch_size: 0               # Choose zero for no batching 
+  seed: 42 
+  num_workers: 0
+  simulated: True            # Set to True if using simulated data
+  rep_idx: 0
+  num_samples: 250
+  eta: 0.5       # Proportionality factor for effect sizes across traits
+  use_heterogeneity: False
+  corr_bounds: 1
+  num_tasks: 4
+  ncausal: 1                  # Per trait (only relevant for rescaling effect)
+  reference_trait: 0          # Select on which trait you want to simulate the SNP effect (only relevant for rescaling effect)
+  transformation_method: "int"
+  # Covariate handling (mutually exclusive):
+  regress_out_covariates: False # Regress covariates before analysis (default: True if cov_path provided)
+  include_covariates_in_model: False # Include covariates in M matrix (alternative approach)
+  # Batch and covariate correction:
+  regress_out_batch_effects: False  # Auto-enabled if batch_path is provided
+
+
+# Example usage:
+# python -u -m limix_modified.run_numpylimix.train_limix_numpy --config /sc/home/bibiana.horn/projects/LIMIX_modified/limix_modified/run_numpylimix/configs/hyperparameters_limix_numpy.yaml
+
+# limix_modified --config /sc/home/bibiana.horn/projects/LIMIX_modified/limix_modified/run_numpylimix/configs/hyperparameters_limix_numpy.yaml

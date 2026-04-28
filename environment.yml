@@ -1,0 +1,37 @@
+name: limix_modified
+
+channels:
+  - defaults
+
+dependencies:
+  # Python
+  - python>=3.10,<3.13
+
+  # Core scientific stack (MKL-backed automatically on defaults)
+  - numpy>=2.1
+  - scipy>=1.15
+  - pandas>=2.2
+
+  # Explicit MKL 
+  - mkl
+
+  # Statistics
+  - statsmodels>=0.14
+
+  # Visualization
+  - matplotlib>=3.9
+  - seaborn>=0.13
+
+  # Genetics I/O
+  - pandas-plink>=2.2
+
+  # Utilities
+  - tqdm>=4.66
+  - click>=8.1
+  - pyyaml>=6.0
+  - psutil>=5.9
+  - humanfriendly>=10.0
+  - texttable>=1.7.0
+
+  # Pip (used without deps to avoid overriding MKL numpy)
+  - pip
