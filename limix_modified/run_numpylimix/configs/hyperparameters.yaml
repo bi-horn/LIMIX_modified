@@ -20,8 +20,8 @@ data_param:
   seed: 42 
   num_workers: 0
   simulated: True            # Set to True if using simulated data
-  rep_idx: 5
-  num_samples: 1300
+  rep_idx: 0
+  num_samples: 250
   eta: 0.0       # Proportionality factor for effect sizes across traits
   use_heterogeneity: False
   corr_bounds: 1

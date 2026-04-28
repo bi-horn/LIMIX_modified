@@ -22,7 +22,7 @@ pip install --no-deps ndarray-listener numpy-sugar optimix brent-search glimix-c
 > **Why conda?** The environment pins NumPy against Intel MKL, which gives
 > deterministic linear algebra (`MKL_CBWR=COMPATIBLE`) and faster BLAS/LAPACK
 > on Intel/AMD CPUs. The `--no-deps` flag keeps pip from replacing MKL-linked
-> NumPy with an OpenBLAS build. See [`test_install.md`](test_install.md) for
+> NumPy with an OpenBLAS build. See [`install_and_run_notes.md`](install_and_run_notes.md) for
 > verification steps and HPC tuning notes.
 
 ## Quick Start
@@ -30,7 +30,7 @@ pip install --no-deps ndarray-listener numpy-sugar optimix brent-search glimix-c
 With no arguments, the pipeline runs a demo simulation on an *A. thaliana* Horton dataset (MAF filtered at 0.10):
 
 ```bash
-limix-modified
+limix_modified
 ```
 
 No config file or arguments needed — the built-in defaults are loaded automatically and results are saved to `./results`.
@@ -41,7 +41,7 @@ All settings have sensible defaults in the built-in config file. You do **not** 
 
 ```bash
 # View all available arguments
-limix-modified --help
+limix_modified --help
 ```
 
 ### Overriding defaults
@@ -50,13 +50,13 @@ Pass only the parameters you want to change. Everything else keeps its default v
 
 ```bash
 # Change the test type and output directory
-limix-modified --test_type specific_vs_common --output_directory ./my_results
+limix_modified --test_type specific_vs_common --output_directory ./my_results
 
 # Run a specific trait test
-limix-modified --test_type specific --pheno_idx 2
+limix_modified --test_type specific --pheno_idx 2
 
 # Adjust multiple testing correction
-limix-modified --correction_method fdr_bh --alpha 0.01
+limix_modified --correction_method fdr_bh --alpha 0.01
 ```
 
 ### Using your own data
@@ -64,7 +64,7 @@ limix-modified --correction_method fdr_bh --alpha 0.01
 Point the pipeline to your own genotype and phenotype files:
 
 ```bash
-limix-modified --geno_path /path/to/genotypes --pheno_path /path/to/phenotypes --dset my_study
+limix_modified --geno_path /path/to/genotypes --pheno_path /path/to/phenotypes --dset my_study
 ```
 
 The `--dset` name is used to organize output files under `results/<dset>/`.
