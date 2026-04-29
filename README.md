@@ -37,7 +37,7 @@ No config file or arguments needed — the built-in defaults are loaded automati
 
 ## Command-Line Interface
 
-All settings have sensible defaults in the built-in config file. You do **not** need to replace or copy this file. Instead, override individual parameters directly via command-line arguments — any argument you pass takes precedence over the corresponding value in the config.
+All settings have defaults in the built-in config file. You do not need to replace or copy this file. Instead, override individual parameters directly via command-line arguments — any argument you pass overwrites the corresponding value in the config.
 
 ```bash
 # View all available arguments
@@ -59,7 +59,7 @@ limix_modified --test_type specific --pheno_idx 2
 
 ### Using your own data
 
-Point the pipeline to your own genotype and phenotype files:
+Adjust the paths to point to your own genotype and phenotype files:
 
 ```bash
 limix_modified --geno_path /path/to/genotypes --pheno_path /path/to/phenotypes --dset my_study
@@ -70,11 +70,11 @@ The `--dset` name is used to organize output files under `results/<dset>/`. When
 ### Running simulations
 
 ```bash
-# Basic simulation with effect size scaling
+# Basic simulation with effect size scaling (eta: rescaling proportionality factor)
 limix_modified --simulated --eta 0.5 --verbose
 
-# Batch simulation: 100 replicates
-limix_modified --simulated --eta 0.5 --n_reps 100
+# Batch simulation: 10 replicates
+limix_modified --simulated --eta 0.5 --n_reps 10
 
 # Resume or extend a batch from a specific replicate
 limix_modified --simulated --eta 0.5 --n_reps 1 --start_rep_idx 100
@@ -168,7 +168,6 @@ data_param:
   reference_trait: 0
   transformation_method: int
   geno_path: ${PACKAGE_ROOT}/data/genotypes
-  # pheno_path resolved from data_path_config
   ...
 ```
 
