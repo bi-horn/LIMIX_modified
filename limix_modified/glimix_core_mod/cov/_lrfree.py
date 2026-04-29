@@ -24,11 +24,10 @@ class LRFreeFormCov(Function):
         m : int
             Upper limit of the covariance matrix rank.
         """
-        if m < n or original_L_init:
-            # low-rank case or if  original_L_init=True → ones
+        if original_L_init:
             initial_L = ones((n, m))
         else:
-            # full-rank or near full-rank → orthogonal init
+            # orthogonal init
             rng = np.random.RandomState(0)
             Q, _ = np.linalg.qr(rng.randn(n, m))
             initial_L = Q
