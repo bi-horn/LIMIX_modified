@@ -11,6 +11,8 @@ Modified CPU-based multivariate GWAS using NumPy, built on [LIMIX](https://githu
 
 ## Installation
 
+**Linux / Windows:**
+
 ```bash
 git clone https://github.com/bi-horn/LIMIX_modified.git
 cd LIMIX_modified
@@ -19,12 +21,17 @@ conda activate limix_modified
 pip install --no-deps ndarray-listener numpy-sugar optimix brent-search glimix-core==3.1.14 limix-plot>=0.1.2 -e .
 ```
 
-> **Why conda?** The environment pins NumPy against Intel MKL, which gives
-> deterministic linear algebra (`MKL_CBWR=COMPATIBLE`) and faster BLAS/LAPACK
-> on Intel/AMD CPUs. The `--no-deps` flag keeps pip from replacing MKL-linked
-> NumPy with an OpenBLAS build. See [`install_and_run_notes.md`](install_and_run_notes.md) for
-> verification steps and HPC tuning notes.
+**macOS (Apple Silicon):** use `environment_macos.yml` instead — Intel MKL is not available on `osx-arm64`, so this file uses Apple's Accelerate framework as the BLAS backend.
 
+```bash
+git clone https://github.com/bi-horn/LIMIX_modified.git
+cd LIMIX_modified
+conda env create -f environment_macos.yml -y
+conda activate limix_modified
+pip install --no-deps ndarray-listener numpy-sugar optimix brent-search glimix-core==3.1.14 limix-plot>=0.1.2 -e .
+```
+
+> **Why conda?** On Linux/Windows the environment pins NumPy against Intel MKL, which gives deterministic linear algebra (`MKL_CBWR=COMPATIBLE`) and faster BLAS/LAPACK on Intel/AMD CPUs. On macOS (Apple Silicon), NumPy links against Accelerate, which is Apple's optimized BLAS for M-series chips. The `--no-deps` flag keeps pip from replacing the conda-installed NumPy with an OpenBLAS build. See [`install_and_run_notes.md`](install_and_run_notes.md) for verification steps and HPC tuning notes.
 ## Quick Start
 
 With no arguments, the pipeline runs a demo simulation on an *A. thaliana* Horton dataset (MAF filtered at 0.10):
