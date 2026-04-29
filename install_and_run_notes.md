@@ -1,53 +1,68 @@
 # Installation verification
 
-```bash
-# Conda installation used for simulation runs and likelihood evaluation because
-# conda can install numpy linked against Intel MKL, providing:
-#   - Deterministic linear algebra via MKL_CBWR=COMPATIBLE (not available with OpenBLAS)
-#   - Bitwise reproducible results regardless of CPU core count or hardware
-#   - Multi-threaded BLAS/LAPACK performance on Intel/AMD CPUs
-# Using pip alone would install numpy with OpenBLAS (or reference BLAS),
-# which is slower on Intel hardware and has no deterministic mode.
+The setup is slightly different on Mac vs. Linux/Windows because Intel MKL — the fast, reproducible BLAS backend we rely on — only exists on x86 (Linux/Windows). On Apple Silicon Macs, NumPy uses Apple's Accelerate framework instead, which works well but isn't bitwise reproducible in the same way.
 
-# 1. Create env from file
+## Linux / Windows
+
+We use conda here so NumPy gets linked against Intel MKL. This gives us deterministic linear algebra (`MKL_CBWR=COMPATIBLE`) and faster BLAS/LAPACK on Intel/AMD CPUs. Installing with pip alone would pull in OpenBLAS, which is slower and not deterministic.
+
+```bash
 cd LIMIX_modified/
+
+# 1. Create the environment
 conda env create -f environment.yml -y
 conda activate limix_modified
 
-# 2. Install LIMIX and all its proprietary dependencies without breaking MKL
-pip install --no-deps ndarray-listener numpy-sugar optimix brent-search glimix-core==3.1.14 limix-plot>=0.1.2 -e .
+# 2. Install LIMIX and its dependencies (--no-deps keeps MKL-linked NumPy intact)
+pip install --no-deps ndarray-listener numpy-sugar optimix brent-search glimix-core==3.1.14 "limix-plot>=0.1.2" -e .
 
-# 3. Verify import
+# 3. Check the install
 python -c "import limix_modified; print('Import: OK')"
 
-# 4. Verify MKL is correctly linked to numpy
-python -c "import numpy as np; np.__config__.show()"
+# 4. Check that NumPy is using MKL (look for 'mkl' in the output)
+python -c "import numpy as np; np.show_config()"
+```
 
-# 5. Clean up
+To remove the environment later:
+
+```bash
 conda deactivate
 conda env remove -n limix_modified -y
 ```
 
+## macOS (Apple Silicon)
+
+Use `environment_macos.yml` instead — it skips MKL and lets NumPy use Accelerate. Everything else is the same.
+
+```bash
+cd LIMIX_modified/
+
+conda env create -f environment_macos.yml -y
+conda activate limix_modified
+
+pip install --no-deps ndarray-listener numpy-sugar optimix brent-search glimix-core==3.1.14 "limix-plot>=0.1.2" -e .
+
+python -c "import limix_modified; print('Import: OK')"
+python -c "import numpy as np; np.show_config()"   # should mention 'accelerate'
+```
+
+> Note: in zsh and bash, the quotes around `"limix-plot>=0.1.2"` are needed — otherwise the shell reads `>=` as a redirect and the install fails.
+
 ## Reproducible mode
 
-For numerical reproducibility across different CPU architectures (e.g. when
-validating results against TorchLIMIX), set:
+For bitwise-identical results across different machines (e.g. when validating against TorchLIMIX):
 
 ```bash
 export MKL_CBWR=COMPATIBLE
 ```
 
-This forces MKL to produce bitwise identical results regardless of the
-underlying hardware. Useful when comparing outputs across login nodes,
-compute nodes, or different clusters.
+This makes MKL produce the same numbers regardless of the CPU. Handy when comparing runs across login nodes, compute nodes, or clusters — but it's noticeably slower, so don't use it for scalability benchmarks.
 
-> **Note:** `MKL_CBWR=COMPATIBLE` can significantly reduce performance and is
-> not recommended for scalability runs.
+On macOS this flag does nothing (no MKL). If you need cross-platform reproducibility, run the reference simulations on Linux/Windows with `MKL_CBWR=COMPATIBLE` and compare against those.
 
 ## Performance tuning (SLURM)
 
-For batch simulations, match thread counts to your allocation so MKL and
-OpenMP use all available cores:
+For batch jobs, match the thread counts to your allocation:
 
 ```bash
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK

@@ -28,7 +28,7 @@ git clone https://github.com/bi-horn/LIMIX_modified.git
 cd LIMIX_modified
 conda env create -f environment_macos.yml -y
 conda activate limix_modified
-pip install --no-deps ndarray-listener numpy-sugar optimix brent-search glimix-core==3.1.14 limix-plot>=0.1.2 -e .
+pip install --no-deps ndarray-listener numpy-sugar optimix brent-search glimix-core==3.1.14 "limix-plot>=0.1.2" -e .
 ```
 
 > **Why conda?** On Linux/Windows the environment pins NumPy against Intel MKL, which gives deterministic linear algebra (`MKL_CBWR=COMPATIBLE`) and faster BLAS/LAPACK on Intel/AMD CPUs. On macOS (Apple Silicon), NumPy links against Accelerate, which is Apple's optimized BLAS for M-series chips. The `--no-deps` flag keeps pip from replacing the conda-installed NumPy with an OpenBLAS build. See [`install_and_run_notes.md`](install_and_run_notes.md) for verification steps and HPC tuning notes.
