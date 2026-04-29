@@ -55,8 +55,6 @@ limix_modified --test_type specific_vs_common --output_directory ./my_results
 # Run a specific trait test
 limix_modified --test_type specific --pheno_idx 2
 
-# Adjust multiple testing correction
-limix_modified --correction_method fdr_bh --alpha 0.01
 ```
 
 ### Using your own data
