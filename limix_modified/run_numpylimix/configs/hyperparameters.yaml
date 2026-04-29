@@ -1,7 +1,7 @@
 project: "limix_numpy" 
-test_type: "any_vs_common" # specify test if you want to use SNP-based approach (choose between common, any, specific or any_specific)
+test_type: "any_vs_common" # specify test if you want to use for GWAS (choose between common, any, specific or any_vs_common
 analysis: "gwas" 
-trait_index: 0 # only relevant for specific effect test
+trait_index: 0 # only relevant for specific effect (vs common) test
 optimize_hyperparams: True
 verbose: True
 rank: 4
@@ -19,7 +19,7 @@ data_param:
   batch_size: 0               # Choose zero for no batching 
   seed: 42 
   num_workers: 0
-  simulated: True            # Set to True if using simulated data
+  simulated: False            # Set to True if using simulated data
   rep_idx: 0
   num_samples: 250
   eta: 0.0       # Proportionality factor for effect sizes across traits

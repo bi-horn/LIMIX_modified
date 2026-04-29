@@ -4,7 +4,7 @@ Modified CPU-based multivariate GWAS using NumPy, built on [LIMIX](https://githu
 
 ## Features
 
-- **Multivariate GWAS** — Test for common, any-effect, or trait-specific genetic associations
+- **Multivariate GWAS** — Test for common, any-effect, or phenotype-specific genetic associations
 - **Multiple test types** — `common`, `any`, `specific`, `any_vs_common`, `specific_vs_common`
 - **Simulation support** — Run batch simulations with effect size scaling (eta) or heterogeneity
 - **Multiple testing correction** — Bonferroni, FDR, Holm, Simes-Hochberg
@@ -67,7 +67,7 @@ Point the pipeline to your own genotype and phenotype files:
 limix_modified --geno_path /path/to/genotypes --pheno_path /path/to/phenotypes --dset my_study
 ```
 
-The `--dset` name is used to organize output files under `results/<dset>/`.
+The `--dset` name is used to organize output files under `results/<dset>/`. When both `--geno_path` and `--pheno_path` are provided, simulated mode is automatically disabled.
 
 ### Running simulations
 
@@ -99,35 +99,37 @@ limix_modified --config path/to/my_config.yaml --test_type any --verbose
 
 | Argument | Default | Description |
 |----------|---------|-------------|
-| `--config` | built-in | Path to a custom YAML config file. Optional — the built-in default is used when omitted. CLI arguments override values from either config. |
+| `--config` | — | Path to a custom YAML config file. Optional — an internal default config is used when omitted. CLI arguments override values from either config. |
 | `--analysis` | `gwas` | Analysis type |
 | `--test_type` | `any_vs_common` | Hypothesis test: `common`, `any`, `specific`, `any_vs_common`, `specific_vs_common` |
-| `--pheno_idx` | `0` | Trait index for trait-specific tests (0-indexed) |
-| `--rank` | `1` | Model rank |
+| `--pheno_idx` | `0` | Trait index for phenotype-specific tests (0-indexed) |
+| `--rank` | `4` | Model rank. Recommended to set equal to the number of phenotypes (full rank). |
+| `--original_L_init` | `False` | If false a QR-based initialization is used (recommended), if true an all-ones initialization for the genetic covariance matrix is used (not recommended). |
 
 #### Simulation
 
 | Argument | Default | Description |
 |----------|---------|-------------|
-| `--simulated` | off | Flag to enable simulated data mode |
-| `--eta` | — | Effect size scaling parameter |
-| `--rep_idx` | — | Single replicate index |
+| `--simulated` | `False` | Flag to enable simulated data mode |
+| `--eta` | `0.0` | Proportionality factor for rescaling effect sizes across traits |
+| `--rep_idx` | — | Single replicate index (defaults to `0` via config) |
 | `--n_reps` | — | Number of replicates for batch run |
 | `--start_rep_idx` | `0` | Starting replicate index |
-| `--use_heterogeneity` | off | Use heterogeneity simulation mode |
-| `--corr_bounds` | — | Correlation bounds for heterogeneity simulation |
+| `--use_heterogeneity` | `False` | If true, heterogeneity GxE instead of rescaling simulation mode is used |
+| `--corr_bounds` | `1` | Correlation bounds for heterogeneity simulation |
+| `--num_samples` | `250` | Number of samples |
+| `--num_tasks` | `4` | Number of traits/tasks for simulation |
+| `--ncausal` | `1` | Number of causal variants per trait (only relevant for rescaling effect) |
+| `--reference_trait` | `0` | Trait on which to simulate the SNP effect (only relevant for rescaling effect) |
 
 #### Data
 
 | Argument | Default | Description |
 |----------|---------|-------------|
 | `--dset` | `thaliana_horton` | Dataset name (also used for output directory structure) |
-| `--geno_path` | built-in | Path to genotype data |
-| `--pheno_path` | built-in | Path to phenotype data |
+| `--geno_path` | — | Path to genotype data. Pre-configured for the bundled `thaliana_horton` dataset; must be provided for custom datasets. |
+| `--pheno_path` | — | Path to phenotype data. Pre-configured for the bundled `thaliana_horton` dataset; must be provided for custom datasets. |
 | `--seed` | `42` | Random seed |
-| `--num_samples` | — | Number of samples |
-| `--num_tasks` | — | Number of traits/tasks |
-| `--ncausal` | — | Number of causal variants |
 | `--transformation_method` | `int` | Phenotype transformation: `int`, `z_score`, `none` |
 
 #### Multiple Testing
@@ -142,24 +144,34 @@ limix_modified --config path/to/my_config.yaml --test_type any --verbose
 | Argument | Default | Description |
 |----------|---------|-------------|
 | `--output_directory` | `./results` | Results output directory |
-| `--verbose` | off | Enable verbose output |
+| `--verbose` | `False` | Enable verbose output |
 
 ## Configuration File
 
 The built-in default config uses `${PACKAGE_ROOT}` placeholders that resolve automatically at runtime:
 
 ```yaml
+project: "limix_numpy"
 analysis: gwas
 test_type: any_vs_common
-rank: 1
+rank: 4
+original_L_init: False
+verbose: True
 output_directory: ./results
 
 data_param:
   dset: thaliana_horton
   seed: 42
-  geno_path: ${PACKAGE_ROOT}/data/genotypes
-  pheno_path: ${PACKAGE_ROOT}/data/phenotypes
+  simulated: False
+  eta: 0.0
+  num_samples: 250
+  num_tasks: 4
+  ncausal: 1
+  reference_trait: 0
   transformation_method: int
+  geno_path: ${PACKAGE_ROOT}/data/genotypes
+  # pheno_path resolved from data_path_config
+  ...
 ```
 
 You only need a custom config file if you want to change settings that are not exposed as CLI arguments. In that case, copy the default and edit the relevant fields — CLI arguments will still override anything in your custom file.
@@ -171,9 +183,9 @@ For a real data run, results are stored under the dataset name:
 ```
 results/
 └── thaliana_horton/
-    ├── log_likelihoods.csv    # LML values and p-values per SNP
-    ├── beta_results.csv       # Effect size estimates
-    └── gwas_summary.csv       # Summary statistics
+    ├── log_likelihoods.csv        # LML values and p-values per SNP
+    ├── beta_results.csv          # Effect size estimates
+    └── gwas_summary.csv          # Summary statistics
 ```
 
 For batch simulations, the directory structure is organized by simulation parameters:
@@ -182,7 +194,7 @@ For batch simulations, the directory structure is organized by simulation parame
 results/
 └── eta0.50/
     ├── rep0000/
-    │   ├── log_likelihoods.csv
+    │   ├── log_likelihoods.parquet
     │   ├── beta_results.csv
     │   ├── sim_params.csv
     │   └── gwas_summary.csv
@@ -197,9 +209,9 @@ results/
 |------|-----------|-------------|----------|
 | `common` | No effect | Same effect across all traits | Shared genetic architecture |
 | `any` | No effect | Independent effects per trait | Any genetic signal |
-| `specific` | No effect | Common + trait-specific effect | Trait-specific signals |
+| `specific` | No effect | Common + phenotype-specific effect | Trait-specific signals |
 | `any_vs_common` | Common effect | Heterogeneous effects | Detect effect heterogeneity |
-| `specific_vs_common` | Common effect | Additional trait-specific effect | Single trait deviation |
+| `specific_vs_common` | Common effect | Additional phenotype-specific effect | Single trait deviation |
 
 ## Attribution
 
