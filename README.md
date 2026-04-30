@@ -8,7 +8,7 @@ This project is a based on code from:
 and
 2. GLIMIX-core (MIT); https://github.com/limix/glimix-core
 
-See [`NOTICE.md`](NOTICE.md) for more details.
+See [NOTICE](./NOTICE) for more details.
 
 ## Features
 
