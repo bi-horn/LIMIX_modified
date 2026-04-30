@@ -2,13 +2,13 @@
 
 Modified CPU-based multivariate GWAS using NumPy
 
-This project is a based on code from:
+This project is based on code from:
 
 1. LIMIX (Apache 2.0); https://github.com/limix/limix
 and
 2. GLIMIX-core (MIT); https://github.com/limix/glimix-core
 
-See [NOTICE](./NOTICE) for more details.
+See [NOTICE](./NOTICE) for full attribution details
 
 ## Features
 
@@ -144,11 +144,14 @@ limix_modified --config path/to/my_config.yaml --test_type any --verbose
 
 | Argument | Default | Description |
 |----------|---------|-------------|
-| `--dset` | `thaliana_horton` | Dataset name (also used for output directory structure) |
+| `--dset` | `my_data` | Dataset name (also used for output directory structure) |
 | `--geno_path` | — | Path to genotype data. Pre-configured for the bundled `thaliana_horton` dataset; must be provided for custom datasets. |
 | `--pheno_path` | — | Path to phenotype data. Pre-configured for the bundled `thaliana_horton` dataset; must be provided for custom datasets. |
 | `--seed` | `42` | Random seed |
 | `--transformation_method` | `int` | Phenotype transformation: `int`, `z_score`, `none` |
+
+> **Reserved dataset names:** Do not use `thaliana_horton` or `thaliana_1001`
+> as your `--dset` name — these are reserved for simulation analysis.
 
 #### Multiple Testing
 
@@ -241,6 +244,6 @@ Based on:
 
 MIT License. See [LICENSE](./LICENSE) for details.
 
-## Author
+## Authors
 
 - Bibiana M. Horn, Christoph Lippert

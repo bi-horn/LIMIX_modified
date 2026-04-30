@@ -249,57 +249,49 @@ def save_results(results: Dict[str, Any]) -> str:
     config = results.get("config", {})
     data_param = config.get("data_param", {})
     simulated = data_param.get("simulated", False)
-    
+
     rep_idx = results.get("rep_idx")
     if rep_idx is None:
         rep_idx = config.get("rep_idx")
     if rep_idx is None:
         rep_idx = data_param.get("rep_idx")
-    
+
     eta = results.get("eta")
     if eta is None:
         eta = config.get("eta")
     if eta is None:
         eta = data_param.get("eta")
-    
+
     output_dir = config.get("output_directory", "./results")
     use_heterogeneity = data_param.get("use_heterogeneity", False)
     corr_bounds = data_param.get("corr_bounds")
     test_type = config.get("test_type", "any_vs_common")
-    
-    # Build output path based on simulated flag, not rep_idx
+
+    # Build output path
     if simulated and rep_idx is not None:
         if use_heterogeneity and corr_bounds is not None:
             sim_folder = f"corr{corr_bounds:.0f}"
         elif eta is not None:
             eta_str = f"{abs(eta):.2f}"
-            if eta < 0:
-                sim_folder = f"eta-{eta_str}"
-            else:
-                sim_folder = f"eta{eta_str}"
+            sim_folder = f"eta-{eta_str}" if eta < 0 else f"eta{eta_str}"
         else:
             sim_folder = "simulation"
         base_dir = os.path.join(output_dir, sim_folder, f"rep{rep_idx:04d}")
     else:
         base_dir = os.path.join(output_dir, data_param.get("dset", "unknown"))
-    
+
     os.makedirs(base_dir, exist_ok=True)
-    
-    # Determine if we have H2 (three hypotheses)
+
     has_h2 = test_type in ["specific_vs_common", "any_vs_common"]
-    
-# Save log_likelihoods.parquet
+
+    # Log likelihoods
     stats = results.get("stats")
     if stats is not None:
-        # 1. Change the extension back to .parquet
-        likelihood_path = os.path.join(base_dir, "log_likelihoods.parquet")
-        
-        # Build headers based on test type
         if has_h2:
             headers = [
                 "snp_index", "lml0", "lml1", "lml2",
-                "lrt10", "df10", "pv10", 
-                "lrt20", "df20", "pv20", 
+                "lrt10", "df10", "pv10",
+                "lrt20", "df20", "pv20",
                 "lrt21", "df21", "pv12"
             ]
         else:
@@ -307,63 +299,63 @@ def save_results(results: Dict[str, Any]) -> str:
                 "snp_index", "lml0", "lml1",
                 "lrt10", "df10", "pv10"
             ]
-        
-        # Add scale columns if they exist
+
         if "scale_H0" in stats.columns:
             headers.extend(["scale_H0", "scale_H1"])
             if has_h2:
                 headers.append("scale_H2")
-        
-        # Save only the relevant columns
+
         likelihood_df = stats[headers].copy() if all(h in stats.columns for h in headers) else stats.copy()
-        
-        # 2. Use to_parquet instead of to_csv
-        likelihood_df.to_parquet(likelihood_path, index=False)
+
+        if simulated:
+            likelihood_path = os.path.join(base_dir, "log_likelihoods.parquet")
+            likelihood_df.to_parquet(likelihood_path, index=False)
+        else:
+            likelihood_path = os.path.join(base_dir, "log_likelihoods.csv")
+            likelihood_df.to_csv(likelihood_path, index=False)
+
         print(f"[INFO] Saved likelihoods to: {likelihood_path}")
-    
-    # Save beta_results.csv
+        
+    # Beta results
     qtl_results = results.get("qtl_results")
-    if qtl_results is not None and hasattr(qtl_results, 'effsizes0'):
-        beta_path = os.path.join(base_dir, "beta_results.csv")
-        
-        # Extract beta values from qtl_results
-        beta_data = {"snp_index": stats["snp_index"].tolist() if stats is not None and "snp_index" in stats.columns else []}
-        
-        # Beta0 (common effects) - same for all SNPs
-        if hasattr(qtl_results, 'effsizes0'):
-            beta0_list = qtl_results.effsizes0.tolist() if hasattr(qtl_results.effsizes0, 'tolist') else qtl_results.effsizes0
-            beta_data["beta0"] = [beta0_list] * len(beta_data["snp_index"])
-            if hasattr(qtl_results, 'effsizes0_se'):
-                beta0_se_list = qtl_results.effsizes0_se.tolist() if hasattr(qtl_results.effsizes0_se, 'tolist') else qtl_results.effsizes0_se
-                beta_data["beta0_se"] = [beta0_se_list] * len(beta_data["snp_index"])
-        
-        # Beta1 (H1 effects) - per SNP
-        if hasattr(qtl_results, 'effsizes1'):
-            beta_data["beta1"] = qtl_results.effsizes1.tolist() if hasattr(qtl_results.effsizes1, 'tolist') else qtl_results.effsizes1
-            if hasattr(qtl_results, 'effsizes1_se'):
-                beta_data["beta1_se"] = qtl_results.effsizes1_se.tolist() if hasattr(qtl_results.effsizes1_se, 'tolist') else qtl_results.effsizes1_se
-        
-        # Beta2 (H2 effects) - per SNP, only for has_h2 tests
-        if has_h2 and hasattr(qtl_results, 'effsizes2'):
-            beta_data["beta2"] = qtl_results.effsizes2.tolist() if hasattr(qtl_results.effsizes2, 'tolist') else qtl_results.effsizes2
-            if hasattr(qtl_results, 'effsizes2_se'):
-                beta_data["beta2_se"] = qtl_results.effsizes2_se.tolist() if hasattr(qtl_results.effsizes2_se, 'tolist') else qtl_results.effsizes2_se
-        
-        beta_df = pd.DataFrame(beta_data)
-        beta_df.to_csv(beta_path, index=False)
+    if qtl_results is not None and hasattr(qtl_results, 'effsizes'):
+        effsizes = qtl_results.effsizes
+        pivot_dfs = []
+
+        for hypothesis, df in effsizes.items():
+            betas = df[df["effect_type"] == "candidate"].copy()
+
+            # Pivot so each env becomes a column pair (effsize + se)
+            for i, env_name in enumerate(betas["env"].unique()):
+                env_rows = betas[betas["env"] == env_name]
+                col_prefix = f"{hypothesis}_beta{i}"
+                pivot = env_rows[["test", "effsize", "effsize_se"]].rename(columns={
+                    "test": "snp_index",
+                    "effsize": col_prefix,
+                    "effsize_se": f"{col_prefix}_se",
+                })
+                pivot_dfs.append(pivot.set_index("snp_index"))
+
+        beta_combined = pd.concat(pivot_dfs, axis=1).reset_index()
+
+        if simulated:
+            beta_path = os.path.join(base_dir, "beta_results.parquet")
+            beta_combined.to_parquet(beta_path, index=False)
+        else:
+            beta_path = os.path.join(base_dir, "beta_results.csv")
+            beta_combined.to_csv(beta_path, index=False)
+
         print(f"[INFO] Saved betas to: {beta_path}")
-    
-    # Save sim_params.csv only for simulated data
+
+    # Simulation parameters (simulated only)
     if simulated:
         sim_params_path = os.path.join(base_dir, "sim_params.csv")
         sim_info = results.get("simulation_info") or {}
-        
+
         if use_heterogeneity:
-            # Heterogeneity simulation
             n_traits = sim_info.get('n_traits', 2)
             context_indices = sim_info.get('heterogeneity_context_indices', [])
-            
-            # Build headers dynamically
+
             context_headers = [f"context{i}_indices" for i in range(n_traits)]
             if rep_idx is not None:
                 headers = ["rep_idx", "use_heterogeneity", "corr_bounds", "n_traits"] + context_headers + ["ncausal", "rank"]
@@ -371,18 +363,16 @@ def save_results(results: Dict[str, Any]) -> str:
             else:
                 headers = ["use_heterogeneity", "n_traits"] + context_headers + ["ncausal", "rank"]
                 row = [use_heterogeneity, n_traits]
-            
-            # Add context indices
+
             for i in range(n_traits):
                 if i < len(context_indices) and context_indices[i] is not None:
                     row.append(str(context_indices[i]))
                 else:
                     row.append("None")
-            
+
             row.extend([sim_info.get('ncausal'), config.get('rank', 1)])
-            
+
         else:
-            # Rescaling simulation
             rescaling_indices = sim_info.get('rescaling_common_indices', [])
             if rep_idx is not None:
                 headers = ["rep_idx", "use_heterogeneity", "rescaling_common_indices", "eta", "rank"]
@@ -390,25 +380,30 @@ def save_results(results: Dict[str, Any]) -> str:
             else:
                 headers = ["use_heterogeneity", "rescaling_common_indices", "eta", "rank"]
                 row = [use_heterogeneity, str(rescaling_indices), eta, config.get('rank', 1)]
-        
+
         sim_params_df = pd.DataFrame([row], columns=headers)
         sim_params_df.to_csv(sim_params_path, index=False)
         print(f"[INFO] Saved sim params to: {sim_params_path}")
-    
-    # Save summary
+
+    # GWAS summary
     stats_len = len(stats) if stats is not None else 0
-    summary = pd.DataFrame({
-        'metric': ['n_significant', 'alpha_bonferroni', 'total_tests', 'eta', 'rep_idx'],
-        'value': [
-            results.get('n_significant', 0),
-            results.get('alpha_bonferroni', np.nan),
-            stats_len,
+    metrics = ['n_significant', 'alpha_bonferroni', 'total_tests']
+    values = [
+        results.get('n_significant', 0),
+        results.get('alpha_bonferroni', np.nan),
+        stats_len,
+    ]
+
+    if simulated:
+        metrics.extend(['eta', 'rep_idx'])
+        values.extend([
             eta if eta is not None else np.nan,
-            rep_idx if rep_idx is not None else np.nan
-        ]
-    })
+            rep_idx if rep_idx is not None else np.nan,
+        ])
+
+    summary = pd.DataFrame({'metric': metrics, 'value': values})
     summary.to_csv(os.path.join(base_dir, "gwas_summary.csv"), index=False)
-    
+
     print(f"[INFO] All results saved to: {base_dir}")
     return base_dir
 

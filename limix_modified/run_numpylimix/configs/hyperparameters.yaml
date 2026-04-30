@@ -34,9 +34,3 @@ data_param:
   include_covariates_in_model: False # Include covariates in M matrix (alternative approach)
   # Batch and covariate correction:
   regress_out_batch_effects: False  # Auto-enabled if batch_path is provided
-
-
-# Example usage:
-# python -u -m limix_modified.run_numpylimix.train_limix_numpy --config /sc/home/bibiana.horn/projects/LIMIX_modified/limix_modified/run_numpylimix/configs/hyperparameters.yaml
-
-# limix_modified --config /sc/home/bibiana.horn/projects/LIMIX_modified/limix_modified/run_numpylimix/configs/hyperparameters.yaml 
