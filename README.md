@@ -1,6 +1,14 @@
 # LIMIX Modified
 
-Modified CPU-based multivariate GWAS using NumPy, built on [LIMIX](https://github.com/limix/limix).
+Modified CPU-based multivariate GWAS using NumPy
+
+This project is a based on code from:
+
+1. LIMIX (Apache 2.0); https://github.com/limix/limix
+and
+2. GLIMIX-core (MIT); https://github.com/limix/glimix-core
+
+See [`NOTICE.md`](NOTICE.md) for more details.
 
 ## Features
 
@@ -21,7 +29,7 @@ conda activate limix_modified
 pip install --no-deps ndarray-listener numpy-sugar optimix brent-search glimix-core==3.1.14 limix-plot>=0.1.2 -e .
 ```
 
-**macOS (Apple Silicon):** use `environment_macos.yml` instead — Intel MKL is not available on `osx-arm64`, so this file uses Apple's Accelerate framework as the BLAS backend.
+**macOS (Apple Silicon):** use `environment_macos.yml` instead — Intel MKL is not available on `osx-arm64`
 
 ```bash
 git clone https://github.com/bi-horn/LIMIX_modified.git
@@ -31,7 +39,12 @@ conda activate limix_modified
 pip install --no-deps ndarray-listener numpy-sugar optimix brent-search glimix-core==3.1.14 "limix-plot>=0.1.2" -e .
 ```
 
-> **Why conda?** On Linux/Windows the environment pins NumPy against Intel MKL, which gives deterministic linear algebra (`MKL_CBWR=COMPATIBLE`) and faster BLAS/LAPACK on Intel/AMD CPUs. On macOS (Apple Silicon), NumPy links against Accelerate, which is Apple's optimized BLAS for M-series chips. The `--no-deps` flag keeps pip from replacing the conda-installed NumPy with an OpenBLAS build. See [`install_and_run_notes.md`](install_and_run_notes.md) for verification steps and HPC tuning notes.
+> **Why conda?** The environment installs NumPy with an optimized math backend
+> (Intel MKL on Linux/Windows, Apple Accelerate on macOS). The `--no-deps` flag
+> prevents pip from replacing it with a slower default. See
+> [`install_and_run_notes.md`](install_and_run_notes.md) for verification steps
+> and HPC tuning notes.
+
 ## Quick Start
 
 With no arguments, the pipeline runs a demo simulation on an *A. thaliana* Horton dataset (MAF filtered at 0.10):
@@ -174,7 +187,7 @@ data_param:
   ncausal: 1
   reference_trait: 0
   transformation_method: int
-  geno_path: ${PACKAGE_ROOT}/data/genotypes
+  geno_path: ${PACKAGE_ROOT}/data/genotypes # preprocessed genotype data already provided for the simulation
   ...
 ```
 

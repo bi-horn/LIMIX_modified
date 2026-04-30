@@ -1,10 +1,10 @@
 # Installation verification
 
-The setup is slightly different on Mac vs. Linux/Windows because Intel MKL — the fast, reproducible BLAS backend we rely on — only exists on x86 (Linux/Windows). On Apple Silicon Macs, NumPy uses Apple's Accelerate framework instead, which works well but isn't bitwise reproducible in the same way.
+The setup is slightly different on Mac vs. Linux/Windows because Intel MKL only exists on x86 (Linux/Windows). On Apple Silicon Macs, NumPy uses Apple's Accelerate framework instead.
 
 ## Linux / Windows
 
-We use conda here so NumPy gets linked against Intel MKL. This gives us deterministic linear algebra (`MKL_CBWR=COMPATIBLE`) and faster BLAS/LAPACK on Intel/AMD CPUs. Installing with pip alone would pull in OpenBLAS, which is slower and not deterministic.
+We use conda here so NumPy gets linked against Intel MKL. This gives you faster BLAS/LAPACK on Intel/AMD CPUs. Installing with pip alone would pull in OpenBLAS, which is slower.
 
 ```bash
 cd LIMIX_modified/
@@ -23,7 +23,7 @@ python -c "import limix_modified; print('Import: OK')"
 python -c "import numpy as np; np.show_config()"
 ```
 
-To remove the environment later:
+To remove the environment later (if wanted):
 
 ```bash
 conda deactivate
@@ -48,6 +48,7 @@ python -c "import numpy as np; np.show_config()"   # should mention 'accelerate'
 
 > Note: in zsh and bash, the quotes around `"limix-plot>=0.1.2"` are needed — otherwise the shell reads `>=` as a redirect and the install fails.
 
+
 ## Reproducible mode
 
 For bitwise-identical results across different machines (e.g. when validating against TorchLIMIX):
@@ -56,7 +57,7 @@ For bitwise-identical results across different machines (e.g. when validating ag
 export MKL_CBWR=COMPATIBLE
 ```
 
-This makes MKL produce the same numbers regardless of the CPU. Handy when comparing runs across login nodes, compute nodes, or clusters — but it's noticeably slower, so don't use it for scalability benchmarks.
+This makes MKL produce the same numbers regardless of the CPU but it's noticeably slower, so don't use it for scalability benchmarks.
 
 On macOS this flag does nothing (no MKL). If you need cross-platform reproducibility, run the reference simulations on Linux/Windows with `MKL_CBWR=COMPATIBLE` and compare against those.
 
